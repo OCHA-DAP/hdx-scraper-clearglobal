@@ -1,0 +1,19 @@
+# Collector specific configuration
+base_url: "https://ludp.clearglobal.org/public/"
+headers:
+  - location_code
+  - location_name
+  - location_level
+  - language_code
+  - language_name
+  - language_rank
+  - proportion_value
+  - reliability_score
+  - dataset_name
+  - url
+  - source
+  - datetime_published
+  - date_creation
+  - representivity_rating
+
+description: "Data on languages spoken in {countryname}, showing the main language spoken in the household by proportion of the population. Data is drawn from {dataset_sources}. For more resources on the languages of {countryname} and language use in humanitarian contexts please visit: https://clearglobal.org/language-maps-and-data/"
