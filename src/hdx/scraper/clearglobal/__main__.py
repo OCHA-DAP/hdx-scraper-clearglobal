@@ -75,9 +75,7 @@ def main(
                 for _, countryinfo in progress_storing_folder(
                     info, countries, "location_code"
                 ):
-                    dataset = pipeline.generate_dataset(
-                        state_dict, countryinfo["location_code"]
-                    )
+                    dataset = pipeline.generate_dataset(state_dict, countryinfo)
                     if dataset:
                         dataset.update_from_yaml(
                             script_dir_plus_file(

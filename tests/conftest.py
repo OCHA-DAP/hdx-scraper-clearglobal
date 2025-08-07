@@ -39,10 +39,7 @@ def configuration(config_dir):
     )
     Country.countriesdata(False)
     Vocabulary._approved_vocabulary = {
-        "tags": [
-            {"name": tag}
-            for tag in ("languages",)
-        ],
+        "tags": [{"name": tag} for tag in ("languages",)],
         "id": "b891512e-9516-4bf5-962a-7a289772a2a1",
         "name": "approved",
     }

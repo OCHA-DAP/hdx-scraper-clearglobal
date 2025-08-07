@@ -28,19 +28,26 @@ class TestPipeline:
                 pipeline = Pipeline(configuration, retriever, tempdir)
                 countries = pipeline.get_locations()
                 assert len(countries) == 250
-                assert countries[23] == {
+                countryinfo = countries[23]
+                assert countryinfo == {
                     "location_code": "BEN",
                     "location_id": 24,
                     "location_level": 0,
                     "location_name": "Benin",
                 }
+
                 creation = parse_date("2017-01-01")
-                dataset = pipeline.generate_dataset({"DEFAULT": creation}, "BEN")
+                dataset = pipeline.generate_dataset({"DEFAULT": creation}, countryinfo)
                 dataset.update_from_yaml(
                     path=join(config_dir, "hdx_dataset_static.yaml")
                 )
                 assert dataset == {
                     "caveats": None,
+                    "customviz": [
+                        {
+                            "url": "https://public.tableau.com/views/LanguageUseDataPlatform/LocationDashboard?:showVizHome=no&:device=desktop&Location%20Level%20Parameter=1&Country=Benin"
+                        }
+                    ],
                     "data_update_frequency": -2,
                     "dataset_date": "[2013-12-31T00:00:00 TO 2013-12-31T23:59:59]",
                     "dataset_preview": "no_preview",

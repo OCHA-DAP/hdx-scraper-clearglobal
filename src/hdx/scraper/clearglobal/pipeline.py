@@ -100,10 +100,10 @@ class Pipeline:
             has_resources = True
         if not has_resources:
             return None
-        dataset.preview_off()
         return latest_creation
 
-    def generate_dataset(self, state: Dict, countryiso3: str) -> Optional[Dataset]:
+    def generate_dataset(self, state: Dict, countryinfo: Dict) -> Optional[Dataset]:
+        countryiso3 = countryinfo["location_code"]
         countryname = Country.get_country_name_from_iso3(countryiso3)
         dataset_title = f"{countryname}: Languages"
         dataset_name = slugify(dataset_title)
@@ -152,4 +152,9 @@ class Pipeline:
             countryname=countryname, dataset_sources=dataset_sources
         )
         dataset["notes"] = description
+        dataset.preview_off()
+        viz_url = self._configuration["viz_url"].format(
+            countryname=countryinfo["location_name"]
+        )
+        dataset.set_custom_viz(viz_url)
         return dataset

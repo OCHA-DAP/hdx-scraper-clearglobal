@@ -17,3 +17,5 @@ headers:
   - representivity_rating
 
 description: "Data on languages spoken in {countryname}, showing the main language spoken in the household by proportion of the population. Data is drawn from {dataset_sources}. For more resources on the languages of {countryname} and language use in humanitarian contexts please visit: https://clearglobal.org/language-maps-and-data/"
+
+viz_url: "https://public.tableau.com/views/LanguageUseDataPlatform/LocationDashboard?:showVizHome=no&:device=desktop&Location%20Level%20Parameter=1&Country={countryname}"
