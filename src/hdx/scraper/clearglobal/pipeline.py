@@ -17,11 +17,19 @@ logger = logging.getLogger(__name__)
 
 
 class Pipeline:
+    representivity_to_int = {
+        "very_high": 0,
+        "high": 1,
+        "moderate": 2,
+        "low": 3,
+        "very_low": 4,
+    }
     representivity_mapping = {
-        "high": "Representative survey at 95% confidence level and a 10% margin of error, or better",
-        "moderate": "Representative survey, but less than 95% confidence level and/or greater than a 10% margin of error",
-        "low": "Non-representative/indicative survey",
-        "very_low": "Small scale, non-representative survey",
+        0: "Census",
+        1: "Representative survey at 95% confidence level and a 10% margin of error, or better",
+        2: "Representative survey, but less than 95% confidence level and/or greater than a 10% margin of error",
+        3: "Non-representative/indicative survey",
+        4: "Small scale, non-representative survey",
     }
 
     def __init__(self, configuration: Configuration, retriever: Retrieve, tempdir: str):
@@ -29,10 +37,6 @@ class Pipeline:
         self._retriever = retriever
         self._tempdir = tempdir
         self._baseurl = self._configuration.get("base_url")
-        self._start_date = default_enddate
-        self._end_date = default_date
-        self._dataset_sources = set()
-        self._representivity_ratings = set()
 
     def get_locations(self):
         url = f"{self._baseurl}locations/"
@@ -66,30 +70,44 @@ class Pipeline:
                 return all_data
             page += 1
 
-    def add_resources(self, countryiso3: str, dataset: Dataset) -> Optional[datetime]:
+    def add_resources(
+        self, countryiso3: str, countryname: str, dataset: Dataset
+    ) -> Optional[datetime]:
         latest_creation = default_date
 
+        earliest_start_date = default_enddate
+        latest_end_date = default_date
+        dataset_sources = set()
+        rep_rating_strs = set()
         has_resources = False
+
         for aggregation in range(0, 3):
             data = self.get_pages(countryiso3, aggregation)
             if not data:
                 continue
             for row in data:
-                self._dataset_sources.add(row["source"])
+                dataset_sources.add(row["source"])
                 published = parse_date(row["datetime_published"])
-                if published < self._start_date:
-                    self._start_date = published
-                if published > self._end_date:
-                    self._end_date = published
+                if published < earliest_start_date:
+                    earliest_start_date = published
+                if published > latest_end_date:
+                    latest_end_date = published
                 creation = parse_date(row["date_creation"])
                 if creation > default_date:
                     latest_creation = creation
-                self._representivity_ratings.add(row["representivity_rating"])
+                rep_rating_strs.add(row["representivity_rating"])
             filename = f"clearglobal_language_use_{countryiso3}_admin{aggregation}.csv"
             description = [f"Languages used in {countryiso3}"]
             if aggregation != 0:
                 description.append(f" by Admin {aggregation}")
-            resourcedata = {"name": filename, "description": "".join(description)}
+                pcoded = True
+            else:
+                pcoded = False
+            resourcedata = {
+                "name": filename,
+                "description": "".join(description),
+                "p_coded": pcoded,
+            }
             dataset.generate_resource_from_rows(
                 self._tempdir,
                 filename,
@@ -100,6 +118,28 @@ class Pipeline:
             has_resources = True
         if not has_resources:
             return None
+
+        dataset.set_time_period(earliest_start_date, latest_end_date)
+        no_rep_ratings = len(rep_rating_strs)
+        if no_rep_ratings == 0:
+            logger.error("No representivity rating, skipping")
+            return None
+        rep_rating_ints = []
+        for rep_rating_str in rep_rating_strs:
+            rep_rating_ints.append(self.representivity_to_int[rep_rating_str])
+        methodology = []
+        for rep_rating_int in sorted(rep_rating_ints):
+            methodology.append(self.representivity_mapping[rep_rating_int])
+        methodology_str = "; ".join(methodology)
+        if methodology_str == "Census":
+            dataset["methodology"] = "Census"
+        else:
+            dataset["methodology"] = "Other"
+            dataset["methodology_other"] = methodology_str
+        description = self._configuration["description"].format(
+            countryname=countryname, dataset_sources=", ".join(dataset_sources)
+        )
+        dataset["notes"] = description
         return latest_creation
 
     def generate_dataset(self, state: Dict, countryinfo: Dict) -> Optional[Dataset]:
@@ -122,7 +162,7 @@ class Pipeline:
             logger.error(f"Couldn't find country {countryiso3}, skipping")
             return None
 
-        last_modified = self.add_resources(countryiso3, dataset)
+        last_modified = self.add_resources(countryiso3, countryname, dataset)
         if not last_modified:
             return None
         if last_modified > state.get(countryiso3, state["DEFAULT"]):
@@ -131,30 +171,7 @@ class Pipeline:
             return None
         dataset.add_tag("languages")
         dataset.set_subnational(True)
-        dataset.set_time_period(self._start_date, self._end_date)
-        dataset_sources = ", ".join(self._dataset_sources)
-        no_rep_ratings = len(self._representivity_ratings)
-        if no_rep_ratings == 0:
-            logger.error("No representivity rating, skipping")
-            return None
-        elif no_rep_ratings != 1:
-            logger.error("Multiple representivity ratings, skipping")
-            return None
-        representivity_rating = self._representivity_ratings.pop()
-        if representivity_rating == "very_high":
-            dataset["methodology"] = "Census"
-        else:
-            dataset["methodology"] = "Other"
-            dataset["methodology_other"] = self.representivity_mapping[
-                representivity_rating
-            ]
-        description = self._configuration["description"].format(
-            countryname=countryname, dataset_sources=dataset_sources
-        )
-        dataset["notes"] = description
         dataset.preview_off()
-        viz_url = self._configuration["viz_url"].format(
-            countryname=countryinfo["location_name"]
-        )
-        dataset.set_custom_viz(viz_url)
+        viz_url = self._configuration["viz_url"].format(countryname=countryname)
+        dataset.set_custom_viz(viz_url.replace(" ", "%20"))
         return dataset
