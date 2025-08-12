@@ -71,11 +71,9 @@ def main(
                 #
                 # Steps to generate dataset
                 #
-                countries = pipeline.get_locations()
-                for _, countryinfo in progress_storing_folder(
-                    info, countries, "location_code"
-                ):
-                    dataset = pipeline.generate_dataset(state_dict, countryinfo)
+                countries = pipeline.get_locations(state_dict)
+                for _, countryinfo in progress_storing_folder(info, countries, "iso3"):
+                    dataset = pipeline.generate_dataset(countryinfo["iso3"])
                     if dataset:
                         dataset.update_from_yaml(
                             script_dir_plus_file(
@@ -89,9 +87,7 @@ def main(
                             updated_by_script=_UPDATED_BY_SCRIPT,
                             batch=info["batch"],
                         )
-
-
-#            state.set(state_dict)
+            state.set(state_dict)
 
 
 if __name__ == "__main__":

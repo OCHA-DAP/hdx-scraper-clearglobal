@@ -26,18 +26,12 @@ class TestPipeline:
                     use_saved=True,
                 )
                 pipeline = Pipeline(configuration, retriever, tempdir)
-                countries = pipeline.get_locations()
-                assert len(countries) == 250
-                countryinfo = countries[23]
-                assert countryinfo == {
-                    "location_code": "BEN",
-                    "location_id": 24,
-                    "location_level": 0,
-                    "location_name": "Benin",
-                }
-
                 creation = parse_date("2017-01-01")
-                dataset = pipeline.generate_dataset({"DEFAULT": creation}, countryinfo)
+                countries = pipeline.get_locations({"DEFAULT": creation})
+                assert len(countries) == 45
+                assert countries[3] == {"iso3": "BEN"}
+
+                dataset = pipeline.generate_dataset("BEN")
                 dataset.update_from_yaml(
                     path=join(config_dir, "hdx_dataset_static.yaml")
                 )

@@ -38,21 +38,29 @@ class Pipeline:
         self._tempdir = tempdir
         self._baseurl = self._configuration.get("base_url")
 
-    def get_locations(self):
-        url = f"{self._baseurl}locations/"
+    def get_locations(self, state: Dict):
+        url = f"{self._baseurl}locations"
         parameters = {
             "page_size": 500,
-            "conds": [["location_level", "=", 0]],
+            "conds": '[["location_level", "=", 0]]',
             "flag": "published",
+            "fields": "date_creation,location_code",
         }
-        json = self._retriever.download_json(url, post=True, parameters=parameters)
-        return json["data"]
+        json = self._retriever.download_json(url, parameters=parameters)
+        locations = []
+        for location in json["data"]:
+            countryiso3 = location["location_code"]
+            last_modified = parse_date(location["date_creation"])
+            if last_modified > state.get(countryiso3, state["DEFAULT"]):
+                state[countryiso3] = last_modified
+                locations.append({"iso3": countryiso3})
+        return locations
 
     def get_pages(self, countryiso3: str, aggregation: int) -> List:
         all_data = []
         url = f"{self._baseurl}location/{countryiso3}"
         page = 0
-        headers = ", ".join(self._configuration["headers"])
+        headers = ",".join(self._configuration["headers"])
         while True:
             parameters = {
                 "aggregation": aggregation,
@@ -73,8 +81,6 @@ class Pipeline:
     def add_resources(
         self, countryiso3: str, countryname: str, dataset: Dataset
     ) -> Optional[datetime]:
-        latest_creation = default_date
-
         earliest_start_date = default_enddate
         latest_end_date = default_date
         dataset_sources = set()
@@ -92,9 +98,6 @@ class Pipeline:
                     earliest_start_date = published
                 if published > latest_end_date:
                     latest_end_date = published
-                creation = parse_date(row["date_creation"])
-                if creation > default_date:
-                    latest_creation = creation
                 rep_rating_strs.add(row["representivity_rating"])
             filename = f"clearglobal_language_use_{countryiso3}_admin{aggregation}.csv"
             description = [f"Languages used in {countryiso3}"]
@@ -140,10 +143,8 @@ class Pipeline:
             countryname=countryname, dataset_sources=", ".join(dataset_sources)
         )
         dataset["notes"] = description
-        return latest_creation
 
-    def generate_dataset(self, state: Dict, countryinfo: Dict) -> Optional[Dataset]:
-        countryiso3 = countryinfo["location_code"]
+    def generate_dataset(self, countryiso3: str) -> Optional[Dataset]:
         countryname = Country.get_country_name_from_iso3(countryiso3)
         dataset_title = f"{countryname}: Languages"
         dataset_name = slugify(dataset_title)
@@ -162,13 +163,7 @@ class Pipeline:
             logger.error(f"Couldn't find country {countryiso3}, skipping")
             return None
 
-        last_modified = self.add_resources(countryiso3, countryname, dataset)
-        if not last_modified:
-            return None
-        if last_modified > state.get(countryiso3, state["DEFAULT"]):
-            state[countryiso3] = last_modified
-        else:
-            return None
+        self.add_resources(countryiso3, countryname, dataset)
         dataset.add_tag("languages")
         dataset.set_subnational(True)
         dataset.preview_off()
