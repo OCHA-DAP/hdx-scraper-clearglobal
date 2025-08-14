@@ -100,7 +100,7 @@ class Pipeline:
                     latest_end_date = published
                 rep_rating_strs.add(row["representivity_rating"])
             filename = f"clearglobal_language_use_{countryiso3}_admin{aggregation}.csv"
-            description = [f"Languages used in {countryiso3}"]
+            description = [f"Languages used in {countryname}"]
             if aggregation != 0:
                 description.append(f" by Admin {aggregation}")
                 pcoded = True

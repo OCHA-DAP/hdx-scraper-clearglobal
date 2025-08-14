@@ -72,7 +72,7 @@ class TestPipeline:
                 assert resources == [
                     {
                         "dataset_preview_enabled": "False",
-                        "description": "Languages used in BEN",
+                        "description": "Languages used in Benin",
                         "format": "csv",
                         "name": "clearglobal_language_use_BEN_admin0.csv",
                         "p_coded": False,
@@ -81,7 +81,7 @@ class TestPipeline:
                     },
                     {
                         "dataset_preview_enabled": "False",
-                        "description": "Languages used in BEN by Admin 1",
+                        "description": "Languages used in Benin by Admin 1",
                         "format": "csv",
                         "name": "clearglobal_language_use_BEN_admin1.csv",
                         "p_coded": True,
@@ -90,7 +90,7 @@ class TestPipeline:
                     },
                     {
                         "dataset_preview_enabled": "False",
-                        "description": "Languages used in BEN by Admin 2",
+                        "description": "Languages used in Benin by Admin 2",
                         "format": "csv",
                         "name": "clearglobal_language_use_BEN_admin2.csv",
                         "p_coded": True,
