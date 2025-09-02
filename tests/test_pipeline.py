@@ -76,8 +76,6 @@ class TestPipeline:
                         "format": "csv",
                         "name": "clearglobal_language_use_BEN_admin0.csv",
                         "p_coded": False,
-                        "resource_type": "file.upload",
-                        "url_type": "upload",
                     },
                     {
                         "dataset_preview_enabled": "False",
@@ -85,8 +83,6 @@ class TestPipeline:
                         "format": "csv",
                         "name": "clearglobal_language_use_BEN_admin1.csv",
                         "p_coded": True,
-                        "resource_type": "file.upload",
-                        "url_type": "upload",
                     },
                     {
                         "dataset_preview_enabled": "False",
@@ -94,8 +90,6 @@ class TestPipeline:
                         "format": "csv",
                         "name": "clearglobal_language_use_BEN_admin2.csv",
                         "p_coded": True,
-                        "resource_type": "file.upload",
-                        "url_type": "upload",
                     },
                 ]
                 for resource in resources:
