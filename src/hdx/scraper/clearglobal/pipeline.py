@@ -111,7 +111,7 @@ class Pipeline:
                 "description": "".join(description),
                 "p_coded": pcoded,
             }
-            dataset.generate_resource_from_rows(
+            dataset.generate_resource(
                 self._tempdir,
                 filename,
                 data,
